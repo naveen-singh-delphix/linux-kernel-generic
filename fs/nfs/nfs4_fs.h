@@ -279,7 +279,8 @@ struct vfsmount *nfs4_submount(struct nfs_server *, struct dentry *,
 			       struct nfs_fh *, struct nfs_fattr *);
 int nfs4_replace_transport(struct nfs_server *server,
 				const struct nfs4_fs_locations *locations);
-
+size_t nfs_parse_server_name(char *string, size_t len, struct sockaddr *sa,
+			     size_t salen, struct net *net);
 /* nfs4proc.c */
 extern int nfs4_handle_exception(struct nfs_server *, int, struct nfs4_exception *);
 extern int nfs4_async_handle_error(struct rpc_task *task,
@@ -577,6 +578,12 @@ static inline bool nfs4_stateid_is_next(const nfs4_stateid *s1, const nfs4_state
 	u32 seq2 = be32_to_cpu(s2->seqid);
 
 	return seq2 == seq1 + 1U || (seq2 == 1U && seq1 == 0xffffffffU);
+}
+
+static inline bool nfs4_stateid_match_or_older(const nfs4_stateid *dst, const nfs4_stateid *src)
+{
+	return nfs4_stateid_match_other(dst, src) &&
+		!(src->seqid && nfs4_stateid_is_newer(dst, src));
 }
 
 static inline void nfs4_stateid_seqid_inc(nfs4_stateid *s1)
